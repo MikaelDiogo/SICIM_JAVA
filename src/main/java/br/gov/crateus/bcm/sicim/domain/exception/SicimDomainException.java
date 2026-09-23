@@ -3,6 +3,8 @@ package br.gov.crateus.bcm.sicim.domain.exception;
 /** Erro de regra de negócio do SICIM. A camada api traduz para Problem Details (RFC 7807). */
 public class SicimDomainException extends RuntimeException {
 
+	private static final long serialVersionUID = 1L;
+
 	private final ErrorType type;
 
 	public SicimDomainException(String message, ErrorType type) {
