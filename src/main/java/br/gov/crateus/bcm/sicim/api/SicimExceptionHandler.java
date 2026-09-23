@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
@@ -43,10 +44,15 @@ public class SicimExceptionHandler {
 		return pd;
 	}
 
-	@ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
-			HttpMessageNotReadableException.class})
+	@ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class,
+			MethodArgumentTypeMismatchException.class})
 	ProblemDetail badRequest(Exception ex) {
-		return problem(HttpStatus.BAD_REQUEST, "validation", "Invalid request: " + ex.getMessage());
+		return problem(HttpStatus.BAD_REQUEST, "validation", "Invalid request parameters.");
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	ProblemDetail unreadable(HttpMessageNotReadableException ex) {
+		return problem(HttpStatus.BAD_REQUEST, "validation", "Malformed JSON body or invalid field value.");
 	}
 
 	@ExceptionHandler(OptimisticLockingFailureException.class)

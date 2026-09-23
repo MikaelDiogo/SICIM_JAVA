@@ -1,7 +1,6 @@
 package br.gov.crateus.bcm.sicim.api;
 
 import br.gov.crateus.bcm.sicim.api.dto.ListPropertiesQuery;
-import br.gov.crateus.bcm.sicim.api.dto.ListPropertyHistoryQuery;
 import br.gov.crateus.bcm.sicim.api.dto.RegisterPropertyRequest;
 import br.gov.crateus.bcm.sicim.api.dto.UpdatePropertyRequest;
 import br.gov.crateus.bcm.sicim.application.PropertyHistoryService;
@@ -22,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,7 +33,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Validated
 @RequestMapping("/api/v1/sicim/properties")
 @Tag(name = "sicim", description = "SICIM — imóveis municipais")
 @SecurityRequirement(name = "bearer-jwt")
