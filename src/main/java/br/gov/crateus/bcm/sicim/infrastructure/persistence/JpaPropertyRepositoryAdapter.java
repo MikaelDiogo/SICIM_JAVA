@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -38,6 +39,7 @@ class JpaPropertyRepositoryAdapter implements PropertyRepository {
 	@Override
 	public Property save(Property property) {
 		PropertyEntity entity = jpa.findById(property.id()).orElseGet(() -> newEntity(property.id()));
+		ensureSameVersion(property, entity);
 		PropertyPersistenceMapper.copyToEntity(property, entity);
 		// flush para devolver version/updated_at reais (lock otimista → 409 no mesmo request)
 		return PropertyPersistenceMapper.toDomain(jpa.saveAndFlush(entity));
@@ -61,6 +63,15 @@ class JpaPropertyRepositoryAdapter implements PropertyRepository {
 	@Override
 	public List<String> findCustomCategoryNames() {
 		return jpa.findDistinctCustomCategoryNames();
+	}
+
+	/** Lock otimista entre requests: a versão lida pelo agregado precisa ser a atual do banco. */
+	private static void ensureSameVersion(Property property, PropertyEntity entity) {
+		boolean persisted = entity.getCreatedAt() != null;
+		if (persisted && entity.getVersion() != property.state().audit().version()) {
+			throw new OptimisticLockingFailureException(
+					"Property " + property.id() + " was modified concurrently.");
+		}
 	}
 
 	private static PropertyEntity newEntity(UUID id) {

@@ -1,10 +1,10 @@
 package br.gov.crateus.bcm.sicim.api;
 
 import br.gov.crateus.bcm.sicim.api.dto.ListPropertyHistoryQuery;
-import br.gov.crateus.bcm.sicim.application.PropertyHistoryService;
 import br.gov.crateus.bcm.sicim.application.SicimRoles;
 import br.gov.crateus.bcm.sicim.application.result.PageResult;
 import br.gov.crateus.bcm.sicim.application.result.PropertyHistoryResult;
+import br.gov.crateus.bcm.sicim.application.usecase.ListPropertyHistoryUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,16 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearer-jwt")
 public class PropertyHistoryController {
 
-	private final PropertyHistoryService historyService;
+	private final ListPropertyHistoryUseCase listHistory;
 
-	public PropertyHistoryController(PropertyHistoryService historyService) {
-		this.historyService = historyService;
+	public PropertyHistoryController(ListPropertyHistoryUseCase listHistory) {
+		this.listHistory = listHistory;
 	}
 
 	@GetMapping
 	@PreAuthorize(SicimRoles.ADMIN_ONLY)
 	@Operation(summary = "Lista o histórico de alterações de imóveis (auditoria de produto)")
 	public PageResult<PropertyHistoryResult> list(@Valid @ModelAttribute ListPropertyHistoryQuery query) {
-		return historyService.list(query.toFilter());
+		return listHistory.execute(query.toFilter());
 	}
 }
