@@ -60,7 +60,7 @@ Nenhuma específica do módulo (sem bot/Telegram no escopo do SICIM).
 | 8 | `sicim-aprovador` desativa; depois tenta aprovar                   | 200 / 409           |
 | 9 | `sicim-admin` recalcula depreciação                                | 200, valores atualizados |
 | 10| `sicim-admin` consulta `/property-history?propertyId=`             | entradas CREATE, APPROVE, ... com `created_by` = sub |
-| 11| `select * from sdk_outbox` (outbox local)                          | um evento por escrita |
+| 11| `select * from sdk.outbox_event`                        | um evento por escrita |
 | 12| Duas edições concorrentes do mesmo imóvel                          | segunda recebe 409  |
 
 Status de execução: preencher na entrega (data, responsável, resultado).
