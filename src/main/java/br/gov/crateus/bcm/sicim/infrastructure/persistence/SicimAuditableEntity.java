@@ -82,6 +82,14 @@ public abstract class SicimAuditableEntity implements AuditableRecord {
 		return id;
 	}
 
+	/** Usado só ao persistir um agregado novo, para manter o id gerado no domínio. */
+	public void assignId(UUID id) {
+		if (createdAt != null) {
+			throw new IllegalStateException("Cannot reassign the id of a persisted record.");
+		}
+		this.id = id;
+	}
+
 	@Override
 	public OffsetDateTime getCreatedAt() {
 		return createdAt;
