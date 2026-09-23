@@ -50,4 +50,14 @@ curl -s http://localhost:8080/api/v1/sicim/hello
 ./gradlew :sicim:test
 ```
 
-Ver `docs/` para Keycloak, contrato da API, nota técnica e UAT.
+## Documentação
+
+| Documento | Conteúdo |
+| --------- | -------- |
+| [`docs/CONTEXTO.md`](docs/CONTEXTO.md) | O que é o SICIM, onde se encaixa no BCM, atores, ciclo de vida, glossário |
+| [`docs/REGRAS.md`](docs/REGRAS.md) | Regras obrigatórias: plataforma, arquitetura, SOLID, código limpo, negócio, Git |
+| [`docs/CONSTRUCAO.md`](docs/CONSTRUCAO.md) | Ambiente, estrutura, fluxo de requisição, receitas de evolução, entrega |
+| [`docs/API.md`](docs/API.md) | Contrato HTTP e mapeamento das rotas NestJS |
+| [`docs/KEYCLOAK-DEV.md`](docs/KEYCLOAK-DEV.md) | Roles `SICIM_*` e usuários de teste |
+| [`docs/FRONT-MIGRACAO.md`](docs/FRONT-MIGRACAO.md) | Adaptação do SICIM_FrontEnd |
+| [`docs/NOTA-TECNICA.md`](docs/NOTA-TECNICA.md) | Nota de entrega para a Seplati e UAT |
