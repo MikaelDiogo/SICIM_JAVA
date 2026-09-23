@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -95,9 +94,10 @@ public class PropertyService {
 		applyGeolocation(p, new Geolocation(cmd.latitude(), cmd.longitude()));
 		p.setManagingUnitId(cmd.managingUnitId());
 		p.setBudgetUnit(cmd.budgetUnit());
-		p.setUsageCategory(Objects.requireNonNullElseGet(cmd.usageCategory(), () -> {
+		if (cmd.usageCategory() == null) {
 			throw SicimDomainException.validation("usageCategory is required.");
-		}));
+		}
+		p.setUsageCategory(cmd.usageCategory());
 		p.setCustomCategoryName(PropertyRules.normalizeCustomCategory(cmd.usageCategory(), cmd.customCategoryName()));
 		applyPossession(p, cmd.possessionType(), toContract(cmd.possessionType(), cmd.possessionContract()));
 		if (cmd.acquisitionYear() == null) {
