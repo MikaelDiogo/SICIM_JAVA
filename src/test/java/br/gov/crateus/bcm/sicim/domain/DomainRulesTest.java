@@ -19,9 +19,9 @@ class DomainRulesTest {
 
 	@Test
 	void zipCodeMustMatchFormat() {
-		new Address("Rua A", "10", "Centro", "63700-000", null);
-		new Address("Rua A", "10", "Centro", "63700000", null);
-		assertThatThrownBy(() -> new Address("Rua A", "10", "Centro", "6370", null))
+		new Address("Rua A", "10", "Centro", null, "63700-000", null);
+		new Address("Rua A", "10", "Centro", null, "63700000", null);
+		assertThatThrownBy(() -> new Address("Rua A", "10", "Centro", null, "6370", null))
 				.isInstanceOf(SicimDomainException.class);
 	}
 

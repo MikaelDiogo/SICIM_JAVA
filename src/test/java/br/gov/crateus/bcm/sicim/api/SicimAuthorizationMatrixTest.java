@@ -9,9 +9,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import br.gov.crateus.bcm.sicim.application.PropertyHistoryService;
-import br.gov.crateus.bcm.sicim.application.PropertyService;
 import br.gov.crateus.bcm.sicim.application.result.PageResult;
+import br.gov.crateus.bcm.sicim.application.usecase.ApprovePropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.DeactivatePropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.GetPropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.ListPropertiesUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.ListPropertyHistoryUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.RecalculateDepreciationUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.RegisterPropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.UpdatePropertyUseCase;
 import br.gov.crateus.bcm.sicim.domain.exception.SicimDomainException;
 import java.util.List;
 import java.util.Set;
@@ -74,16 +80,27 @@ class SicimAuthorizationMatrixTest {
 	private MockMvc mvc;
 
 	@MockitoBean
-	private PropertyService propertyService;
-
+	private RegisterPropertyUseCase registerProperty;
 	@MockitoBean
-	private PropertyHistoryService historyService;
+	private UpdatePropertyUseCase updateProperty;
+	@MockitoBean
+	private ApprovePropertyUseCase approveProperty;
+	@MockitoBean
+	private DeactivatePropertyUseCase deactivateProperty;
+	@MockitoBean
+	private RecalculateDepreciationUseCase recalculateDepreciation;
+	@MockitoBean
+	private GetPropertyUseCase getProperty;
+	@MockitoBean
+	private ListPropertiesUseCase listProperties;
+	@MockitoBean
+	private ListPropertyHistoryUseCase listHistory;
 
 	@BeforeEach
 	void stubs() {
-		when(propertyService.list(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
-		when(historyService.list(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
-		when(propertyService.listCustomCategoryNames()).thenReturn(List.of());
+		when(listProperties.execute(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
+		when(listProperties.customCategoryNames()).thenReturn(List.of());
+		when(listHistory.execute(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
 	}
 
 	record Case(String name, MockHttpServletRequestBuilder request, int okStatus, Set<String> allowed) {
@@ -147,7 +164,7 @@ class SicimAuthorizationMatrixTest {
 
 	@Test
 	void domainNotFoundIsProblemDetails404() throws Exception {
-		when(propertyService.get(ID)).thenThrow(SicimDomainException.notFound("No property found"));
+		when(getProperty.execute(ID)).thenThrow(SicimDomainException.notFound("No property found"));
 		mvc.perform(get(BASE + "/properties/" + ID)
 						.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SICIM_VIEWER"))))
 				.andExpect(status().isNotFound())
@@ -156,7 +173,7 @@ class SicimAuthorizationMatrixTest {
 
 	@Test
 	void domainConflictIsProblemDetails409() throws Exception {
-		when(propertyService.approve(ID)).thenThrow(SicimDomainException.conflict("inactive"));
+		when(approveProperty.execute(ID)).thenThrow(SicimDomainException.conflict("inactive"));
 		mvc.perform(patch(BASE + "/properties/" + ID + "/approve")
 						.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_SICIM_APPROVER"))))
 				.andExpect(status().isConflict());
