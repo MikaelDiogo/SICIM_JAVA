@@ -1,7 +1,7 @@
 package br.gov.crateus.bcm.sicim.application.result;
 
 import br.gov.crateus.bcm.sicim.domain.PropertyHistoryAction;
-import br.gov.crateus.bcm.sicim.infrastructure.persistence.PropertyHistoryEntity;
+import br.gov.crateus.bcm.sicim.domain.PropertyHistoryEntry;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -19,8 +19,8 @@ public record PropertyHistoryResult(
 		OffsetDateTime timestamp
 ) {
 
-	public static PropertyHistoryResult from(PropertyHistoryEntity e) {
-		return new PropertyHistoryResult(e.getId(), e.getCreatedBy(), "Property", e.getPropertyId(), e.getAction(),
-				e.getDataBefore(), e.getDataAfter(), e.getCorrelationId(), e.getCreatedAt());
+	public static PropertyHistoryResult from(PropertyHistoryEntry e) {
+		return new PropertyHistoryResult(e.id(), e.author(), "Property", e.propertyId(), e.action(),
+				e.dataBefore(), e.dataAfter(), e.correlationId(), e.recordedAt());
 	}
 }

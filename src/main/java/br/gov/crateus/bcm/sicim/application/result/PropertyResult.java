@@ -1,9 +1,11 @@
 package br.gov.crateus.bcm.sicim.application.result;
 
+import br.gov.crateus.bcm.sicim.domain.PossessionContract;
 import br.gov.crateus.bcm.sicim.domain.PossessionType;
+import br.gov.crateus.bcm.sicim.domain.Property;
+import br.gov.crateus.bcm.sicim.domain.PropertyState;
 import br.gov.crateus.bcm.sicim.domain.PropertyStatus;
 import br.gov.crateus.bcm.sicim.domain.UsageCategory;
-import br.gov.crateus.bcm.sicim.infrastructure.persistence.PropertyEntity;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -46,22 +48,25 @@ public record PropertyResult(
 
 	public record Contract(OffsetDateTime startDate, OffsetDateTime endDate, BigDecimal monthlyValue,
 			BigDecimal referenceValue, String grantor, String lessor, String administrativeProcessNumber) {
+
+		static Contract from(PossessionContract c) {
+			return c == null ? null : new Contract(c.startDate(), c.endDate(), c.monthlyValue(),
+					c.referenceValue(), c.grantor(), c.lessor(), c.administrativeProcessNumber());
+		}
 	}
 
-	public static PropertyResult from(PropertyEntity e) {
-		Contract contract = e.getContractStartDate() == null ? null : new Contract(
-				e.getContractStartDate(), e.getContractEndDate(), e.getContractMonthlyValue(),
-				e.getContractReferenceValue(), e.getContractGrantor(), e.getContractLessor(),
-				e.getContractAdministrativeProcessNumber());
-		BigDecimal netBookValue = e.getOriginalValue().subtract(e.getAccumulatedDepreciation()).max(BigDecimal.ZERO);
+	public static PropertyResult from(Property property) {
+		PropertyState s = property.state();
+		var a = s.address();
 		return new PropertyResult(
-				e.getId(), e.getRegistrationNumber(), e.getNotaryOffice(), e.getNotarialDescription(),
-				new Address(e.getAddressStreet(), e.getAddressNumber(), e.getAddressNeighborhood(),
-						e.getNeighborhoodId(), e.getAddressZipCode(), e.getAddressReference()),
-				e.getTotalArea(), e.getBuiltArea(), e.getLatitude(), e.getLongitude(), e.getManagingUnitId(),
-				e.getBudgetUnit(), e.getUsageCategory(), e.getCustomCategoryName(), e.getPossessionType(), contract,
-				e.getAcquisitionYear(), e.getOriginalValue(), e.getAccumulatedDepreciation(), netBookValue,
-				e.getPublicPurpose(), e.getStatus(), e.getCreatedBy(), e.getApprovedBy(), e.getApprovedAt(),
-				e.getLifecycleStatus(), e.getVersion(), e.getCreatedAt(), e.getUpdatedAt());
+				s.id(), s.registrationNumber().value(), s.notaryOffice(), s.notarialDescription(),
+				new Address(a.street(), a.number(), a.neighborhood(), a.neighborhoodId(), a.zipCode(), a.reference()),
+				s.totalArea(), s.builtArea(), s.geolocation().latitude(), s.geolocation().longitude(),
+				s.managingUnitId(), s.budgetUnit(), s.usageCategory(), s.customCategoryName(), s.possessionType(),
+				Contract.from(s.possessionContract()), s.acquisitionYear(), s.originalValue().amount(),
+				s.accumulatedDepreciation().amount(), property.netBookValue().amount(), s.publicPurpose(),
+				s.status(), s.audit().createdBy(), s.approvedBy(), s.approvedAt(),
+				s.audit().lifecycleStatus().name(), s.audit().version(), s.audit().createdAt(),
+				s.audit().updatedAt());
 	}
 }
