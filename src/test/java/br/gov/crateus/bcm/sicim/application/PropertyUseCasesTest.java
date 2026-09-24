@@ -7,6 +7,8 @@ import br.gov.crateus.bcm.sicim.application.command.AddressInput;
 import br.gov.crateus.bcm.sicim.application.command.PossessionContractInput;
 import br.gov.crateus.bcm.sicim.application.command.RegisterPropertyCommand;
 import br.gov.crateus.bcm.sicim.application.command.UpdatePropertyCommand;
+import br.gov.crateus.bcm.sicim.application.fake.InMemoryManagingUnitDirectory;
+import br.gov.crateus.bcm.sicim.application.fake.InMemoryNeighborhoodDirectory;
 import br.gov.crateus.bcm.sicim.application.fake.InMemoryPropertyRepository;
 import br.gov.crateus.bcm.sicim.application.fake.RecordingEventPublisher;
 import br.gov.crateus.bcm.sicim.application.fake.RecordingHistoryRepository;
@@ -16,6 +18,7 @@ import br.gov.crateus.bcm.sicim.application.port.TimeProvider;
 import br.gov.crateus.bcm.sicim.application.result.PropertyResult;
 import br.gov.crateus.bcm.sicim.application.support.PropertyChangeRecorder;
 import br.gov.crateus.bcm.sicim.application.support.PropertyLookup;
+import br.gov.crateus.bcm.sicim.application.support.PropertyReferenceValidator;
 import br.gov.crateus.bcm.sicim.application.usecase.ApprovePropertyUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.DeactivatePropertyUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.GetPropertyUseCase;
@@ -43,6 +46,8 @@ class PropertyUseCasesTest {
 	private InMemoryPropertyRepository properties;
 	private RecordingHistoryRepository history;
 	private RecordingEventPublisher events;
+	private InMemoryManagingUnitDirectory managingUnits;
+	private InMemoryNeighborhoodDirectory neighborhoods;
 
 	private RegisterPropertyUseCase register;
 	private UpdatePropertyUseCase update;
@@ -56,6 +61,8 @@ class PropertyUseCasesTest {
 		properties = new InMemoryPropertyRepository();
 		history = new RecordingHistoryRepository();
 		events = new RecordingEventPublisher();
+		managingUnits = new InMemoryManagingUnitDirectory();
+		neighborhoods = new InMemoryNeighborhoodDirectory();
 		TimeProvider time = () -> NOW;
 		CurrentUserProvider user = new CurrentUserProvider() {
 			public String subject() { return "approver-sub"; }
@@ -63,10 +70,11 @@ class PropertyUseCasesTest {
 			public Set<String> sicimRoles() { return Set.of("SICIM_APPROVER"); }
 		};
 		PropertyChangeRecorder recorder = new PropertyChangeRecorder(history, events, () -> "corr-1");
+		PropertyReferenceValidator references = new PropertyReferenceValidator(managingUnits, neighborhoods);
 		PropertyLookup lookup = new PropertyLookup(properties);
 
-		register = new RegisterPropertyUseCase(properties, recorder, time);
-		update = new UpdatePropertyUseCase(lookup, properties, recorder, time);
+		register = new RegisterPropertyUseCase(properties, recorder, references, time);
+		update = new UpdatePropertyUseCase(lookup, properties, recorder, references, time);
 		approve = new ApprovePropertyUseCase(lookup, properties, recorder, user, time);
 		deactivate = new DeactivatePropertyUseCase(lookup, properties, recorder);
 		recalculate = new RecalculateDepreciationUseCase(lookup, properties, recorder, time);
@@ -84,6 +92,11 @@ class PropertyUseCasesTest {
 	private static UpdatePropertyCommand purpose(String publicPurpose) {
 		return new UpdatePropertyCommand(null, null, null, null, null, null, null, null, null, null, null, null,
 				null, null, null, publicPurpose);
+	}
+
+	private static UpdatePropertyCommand managingUnit(UUID managingUnitId) {
+		return new UpdatePropertyCommand(null, null, null, null, null, null, null, managingUnitId, null, null, null,
+				null, null, null, null, null);
 	}
 
 	@Test
@@ -169,5 +182,43 @@ class PropertyUseCasesTest {
 		assertThatThrownBy(() -> get.execute(UUID.randomUUID()))
 				.isInstanceOfSatisfying(SicimDomainException.class,
 						e -> assertThat(e.getType()).isEqualTo(ErrorType.NOT_FOUND));
+	}
+
+	@Test
+	void registerFailsWhenManagingUnitDoesNotExist() {
+		managingUnits.forget(UNIT);
+
+		assertThatThrownBy(() -> register.execute(command(PossessionType.OWNED, null)))
+				.isInstanceOfSatisfying(SicimDomainException.class,
+						e -> assertThat(e.getType()).isEqualTo(ErrorType.VALIDATION));
+		assertThat(properties.size()).isZero();
+	}
+
+	@Test
+	void registerFailsWhenNeighborhoodDoesNotExist() {
+		UUID neighborhood = UUID.randomUUID();
+		neighborhoods.forget(neighborhood);
+		RegisterPropertyCommand withNeighborhood = new RegisterPropertyCommand("mat-2024-00001", "Cartório 1º Ofício",
+				"Descrição cartorial",
+				new AddressInput("Rua Coronel Zezé", "100", "Centro", neighborhood, "63700-000", null),
+				new BigDecimal("500"), new BigDecimal("200"), new BigDecimal("-5.1783"), new BigDecimal("-40.6775"),
+				UNIT, null, UsageCategory.ADMINISTRATIVE, null, PossessionType.OWNED, null, 2016,
+				new BigDecimal("100000"), "Sede administrativa");
+
+		assertThatThrownBy(() -> register.execute(withNeighborhood))
+				.isInstanceOfSatisfying(SicimDomainException.class,
+						e -> assertThat(e.getType()).isEqualTo(ErrorType.VALIDATION));
+		assertThat(properties.size()).isZero();
+	}
+
+	@Test
+	void updateFailsWhenManagingUnitDoesNotExist() {
+		UUID id = register.execute(command(PossessionType.OWNED, null)).id();
+		UUID otherUnit = UUID.randomUUID();
+		managingUnits.forget(otherUnit);
+
+		assertThatThrownBy(() -> update.execute(id, managingUnit(otherUnit)))
+				.isInstanceOfSatisfying(SicimDomainException.class,
+						e -> assertThat(e.getType()).isEqualTo(ErrorType.VALIDATION));
 	}
 }
