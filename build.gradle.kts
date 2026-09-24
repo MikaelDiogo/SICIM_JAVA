@@ -42,6 +42,12 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+tasks.withType<JavaCompile> {
+	// Sem o plugin do Spring Boot (que adiciona isso por padrão), @PathVariable UUID id sem nome
+	// explícito não resolve em runtime: Spring MVC precisa dos nomes dos parâmetros via reflection.
+	options.compilerArgs.add("-parameters")
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
