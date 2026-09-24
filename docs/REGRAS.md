@@ -65,7 +65,7 @@ grep -rn "sicim.infrastructure" src/main/java/br/gov/crateus/bcm/sicim/api      
 | **O** — Aberto/fechado | Novos comportamentos entram como nova classe, não como `if` em classe existente. Novo evento = novo item em `PropertyEvent`; nova taxa = nova entrada no mapa. | `PropertyEventPublisher.PropertyEvent`, `DepreciationCalculator.ANNUAL_RATE` |
 | **L** — Substituição de Liskov | Qualquer implementação de porta pode substituir outra sem quebrar o caso de uso (JPA em produção, memória nos testes). | `JpaPropertyRepositoryAdapter` ↔ `InMemoryPropertyRepository` |
 | **I** — Segregação de interfaces | Portas pequenas e específicas; histórico só tem `append`/`findPage` (não há update/delete). | `PropertyHistoryRepository`, `TimeProvider`, `CorrelationIdProvider` |
-| **D** — Inversão de dependência | Casos de uso dependem de abstrações definidas na `application`; a `infrastructure` as implementa. | `PropertyRepository` ← `JpaPropertyRepositoryAdapter`; `PropertyEventPublisher` ← `OutboxPropertyEventPublisher` |
+| **D** — Inversão de dependência | Casos de uso dependem de abstrações definidas na `application`; a `infrastructure` as implementa. | `PropertyRepository` ← `JpaPropertyRepositoryAdapter`; `PropertyEventPublisher` ← `OutboxPropertyEventPublisher`; `ManagingUnitDirectory` ← `ManagingUnitDirectoryAdapter`; `NeighborhoodDirectory` ← `NeighborhoodDirectoryAdapter` |
 
 ## 4. Regras de código limpo
 
@@ -104,6 +104,8 @@ grep -rn "sicim.infrastructure" src/main/java/br/gov/crateus/bcm/sicim/api      
 | RN14 | Matrícula e status não são editáveis via PATCH | `PropertyChanges` (não possui os campos) | — |
 | RN15 | Toda escrita gera entrada de histórico (antes/depois) e evento de outbox na mesma transação | `PropertyChangeRecorder` | — |
 | RN16 | Edição concorrente do mesmo imóvel | `version` + `JpaPropertyRepositoryAdapter` | 409 |
+| RN17 | Órgão gestor (`managingUnitId`) deve existir na plataforma (organization) | `PropertyReferenceValidator` | 400 |
+| RN18 | Bairro (`neighborhoodId`), quando informado, deve existir na plataforma (geography) | `PropertyReferenceValidator` | 400 |
 
 ## 6. Regras de segurança e autorização
 

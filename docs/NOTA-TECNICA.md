@@ -16,7 +16,10 @@ Nenhuma claim customizada exigida na v1. Autor das operações = claim `sub`.
 
 ## Env vars
 
-Nenhuma específica do módulo (sem bot/Telegram no escopo do SICIM).
+| Variável | Uso | Padrão |
+| -------- | --- | ------ |
+| `sicim.integration.organization.base-url` | Base URL da API de organization (valida `managingUnitId` — RN17) | vazio → validação permissiva (só formato UUID) |
+| `sicim.integration.geography.base-url` | Base URL da API de geography (valida `neighborhoodId` — RN18) | vazio → validação permissiva (só formato UUID) |
 
 ## O que mudou em relação ao NestJS
 
@@ -32,13 +35,21 @@ Nenhuma específica do módulo (sem bot/Telegram no escopo do SICIM).
 
 ## Limitações e pontos para alinhar com a Seplati
 
-1. **PostGIS** — o Postgres do Dev Host (`postgres:16-alpine`) não tem PostGIS, então a posição é
-   `latitude`/`longitude` `NUMERIC(9,6)`. No BDM (PostGIS) propõe-se migration posterior adicionando
-   `geom geometry(Point,4326)` gerada a partir das colunas + índice GiST.
-2. **Validação do órgão gestor** — o NestJS verificava a existência do órgão na própria base. Aqui só
-   é validado o formato UUID; a checagem contra organization depende da integração no monólito.
-3. **Bairro** — `address_neighborhood` (texto) mantido por compatibilidade; `neighborhood_id` (UUID de
-   geography) adicionado como opcional. Alvo: tornar o UUID a fonte da verdade.
+1. **PostGIS** — a posição continua em `latitude`/`longitude` `NUMERIC(9,6)`, mas a coluna
+   `geom geometry(Point,4326)` (+ índice GiST) já está preparada em
+   `V20261015__sicim_property_geom.sql`: o bloco `DO` só roda o DDL dependente de PostGIS se a
+   extensão existir no servidor, então é no-op seguro no Dev Host atual (`postgres:16-alpine`,
+   sem PostGIS) e ativa sozinha quando o BDM (ou um Dev Host trocado para `postgis/postgis`)
+   tiver a extensão — nenhuma ação adicional de código.
+2. **Validação do órgão gestor** — a porta `ManagingUnitDirectory` (RN17) e o adapter
+   `ManagingUnitDirectoryAdapter` já existem. Sem `sicim.integration.organization.base-url`
+   configurada (caso do Dev Host hoje, que não expõe essa API), a validação segue permissiva
+   (só formato UUID); falta a Seplati informar a base URL real da API de organization.
+3. **Bairro** — `address_neighborhood` (texto) mantido por compatibilidade; `neighborhood_id`
+   (UUID de geography) é opcional e agora validado (RN18) pela porta `NeighborhoodDirectory` /
+   adapter `NeighborhoodDirectoryAdapter`, com o mesmo fallback permissivo do item 2 enquanto
+   `sicim.integration.geography.base-url` não for configurada. Alvo: tornar o UUID a fonte da
+   verdade.
 4. **Entidade base** — o módulo espelha as colunas de `SdkAuditableEntity` em `SicimAuditableEntity`
    (o dev-host depende do módulo; depender de volta criaria ciclo). A Seplati pode trocar por
    `BaseAuditableEntity` na portabilidade sem mudar o schema.
@@ -54,7 +65,7 @@ Nenhuma específica do módulo (sem bot/Telegram no escopo do SICIM).
 | 2 | Flyway: `\dt sicim.*` mostra `properties` e `property_history`     | ok                  |
 | 3 | `sicim-cadastro` cadastra imóvel OWNED                             | 201 PENDING_APPROVAL |
 | 4 | Mesmo número de matrícula de novo                                  | 409                 |
-| 5 | RENTED sem contrato / área construída > total / fora de Crateús    | 400                 |
+| 5 | RENTED sem contrato / área construída > total / fora de Crateús / órgão gestor ou bairro inexistente (com integração configurada) | 400 |
 | 6 | `sicim-consulta` tenta cadastrar                                   | 403                 |
 | 7 | `sicim-aprovador` aprova                                           | 200 APPROVED        |
 | 8 | `sicim-aprovador` desativa; depois tenta aprovar                   | 200 / 409           |
