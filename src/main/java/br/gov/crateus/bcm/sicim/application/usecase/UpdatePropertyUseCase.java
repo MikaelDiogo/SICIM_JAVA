@@ -8,6 +8,7 @@ import br.gov.crateus.bcm.sicim.application.result.PropertyResult;
 import br.gov.crateus.bcm.sicim.application.support.PropertyChangeRecorder;
 import br.gov.crateus.bcm.sicim.application.support.PropertyCommandMapper;
 import br.gov.crateus.bcm.sicim.application.support.PropertyLookup;
+import br.gov.crateus.bcm.sicim.application.support.PropertyReferenceValidator;
 import br.gov.crateus.bcm.sicim.application.support.PropertySnapshot;
 import br.gov.crateus.bcm.sicim.domain.Property;
 import br.gov.crateus.bcm.sicim.domain.PropertyHistoryAction;
@@ -22,13 +23,15 @@ public class UpdatePropertyUseCase {
 	private final PropertyLookup lookup;
 	private final PropertyRepository properties;
 	private final PropertyChangeRecorder recorder;
+	private final PropertyReferenceValidator references;
 	private final TimeProvider time;
 
 	public UpdatePropertyUseCase(PropertyLookup lookup, PropertyRepository properties,
-			PropertyChangeRecorder recorder, TimeProvider time) {
+			PropertyChangeRecorder recorder, PropertyReferenceValidator references, TimeProvider time) {
 		this.lookup = lookup;
 		this.properties = properties;
 		this.recorder = recorder;
+		this.references = references;
 		this.time = time;
 	}
 
@@ -36,6 +39,10 @@ public class UpdatePropertyUseCase {
 	public PropertyResult execute(UUID id, UpdatePropertyCommand command) {
 		Property property = lookup.require(id);
 		Map<String, Object> before = PropertySnapshot.of(property);
+		references.validateManagingUnit(command.managingUnitId());
+		if (command.address() != null) {
+			references.validateNeighborhood(command.address().neighborhoodId());
+		}
 		property.update(PropertyCommandMapper.toChanges(command), time.currentYear());
 		Property saved = properties.save(property);
 		recorder.record(saved, PropertyHistoryAction.UPDATE, before, PropertyEvent.PROPERTY_UPDATED);
