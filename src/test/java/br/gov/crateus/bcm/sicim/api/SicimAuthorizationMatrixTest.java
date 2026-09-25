@@ -9,16 +9,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.gov.crateus.bcm.sicim.application.result.ManagingUnitResult;
 import br.gov.crateus.bcm.sicim.application.result.PageResult;
 import br.gov.crateus.bcm.sicim.application.usecase.ApprovePropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.DeactivateManagingUnitUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.DeactivatePropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.GetManagingUnitUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.GetPropertyUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.ListManagingUnitsUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.ListPropertiesUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.ListPropertyHistoryUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.RecalculateDepreciationUseCase;
+import br.gov.crateus.bcm.sicim.application.usecase.RegisterManagingUnitUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.RegisterPropertyUseCase;
 import br.gov.crateus.bcm.sicim.application.usecase.UpdatePropertyUseCase;
+import br.gov.crateus.bcm.sicim.domain.ManagingUnitType;
 import br.gov.crateus.bcm.sicim.domain.exception.SicimDomainException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -49,7 +56,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * Histórico (auditoria)        sim    não       não        não
  * </pre>
  */
-@WebMvcTest(controllers = {PropertyController.class, PropertyHistoryController.class})
+@WebMvcTest(controllers = {PropertyController.class, PropertyHistoryController.class, ManagingUnitController.class})
 @Import(TestSecurityConfig.class)
 class SicimAuthorizationMatrixTest {
 
@@ -95,12 +102,29 @@ class SicimAuthorizationMatrixTest {
 	private ListPropertiesUseCase listProperties;
 	@MockitoBean
 	private ListPropertyHistoryUseCase listHistory;
+	@MockitoBean
+	private RegisterManagingUnitUseCase registerManagingUnit;
+	@MockitoBean
+	private ListManagingUnitsUseCase listManagingUnits;
+	@MockitoBean
+	private GetManagingUnitUseCase getManagingUnit;
+	@MockitoBean
+	private DeactivateManagingUnitUseCase deactivateManagingUnit;
+
+	private static final String MANAGING_UNIT_BODY = """
+			{ "name": "Secretaria de Educação", "acronym": "SEDUC", "type": "SECRETARIAT" }
+			""";
 
 	@BeforeEach
 	void stubs() {
 		when(listProperties.execute(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
 		when(listProperties.customCategoryNames()).thenReturn(List.of());
 		when(listHistory.execute(any())).thenReturn(new PageResult<>(List.of(), 0, 1, 20));
+		when(listManagingUnits.execute()).thenReturn(List.of());
+		when(registerManagingUnit.execute(any())).thenReturn(new ManagingUnitResult(ID, "Secretaria de Educação",
+				"SEDUC", ManagingUnitType.SECRETARIAT, "ACTIVE", OffsetDateTime.now()));
+		when(deactivateManagingUnit.execute(any())).thenReturn(new ManagingUnitResult(ID, "Secretaria de Educação",
+				"SEDUC", ManagingUnitType.SECRETARIAT, "INACTIVE", OffsetDateTime.now()));
 	}
 
 	record Case(String name, MockHttpServletRequestBuilder request, int okStatus, Set<String> allowed) {
@@ -127,7 +151,12 @@ class SicimAuthorizationMatrixTest {
 				new Case("recalculate", patch(BASE + "/properties/" + ID + "/recalculate-depreciation"), 200,
 						Set.of("SICIM_ADMIN")),
 				new Case("property-history", get(BASE + "/property-history"), 200, Set.of("SICIM_ADMIN")),
-				new Case("history-by-property", get(BASE + "/properties/" + ID + "/history"), 200, Set.of("SICIM_ADMIN")));
+				new Case("history-by-property", get(BASE + "/properties/" + ID + "/history"), 200, Set.of("SICIM_ADMIN")),
+				new Case("managing-unit-list", get(BASE + "/managing-units"), 200, all),
+				new Case("managing-unit-register", post(BASE + "/managing-units").contentType(MediaType.APPLICATION_JSON)
+						.content(MANAGING_UNIT_BODY), 201, Set.of("SICIM_ADMIN")),
+				new Case("managing-unit-deactivate", patch(BASE + "/managing-units/" + ID + "/deactivate"), 200,
+						Set.of("SICIM_ADMIN")));
 	}
 
 	static Stream<Arguments> matrix() {
