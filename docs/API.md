@@ -11,7 +11,8 @@ Envie `X-Correlation-Id` por **intenção de negócio**; ele é gravado no hist�
 | `POST /auth/login`                            | **removido** — login no Keycloak (OIDC/PKCE)                 | —                              |
 | `POST /users`, tabela `users` (bcrypt)        | **removido** — usuários e perfis no Keycloak                 | —                              |
 | —                                             | `GET /api/v1/sicim/me` (id, username, roles do JWT)          | autenticado                    |
-| `GET/POST /managing-units`                    | **removido** — órgãos vêm da plataforma (organization) por UUID | —                           |
+| `GET/POST /managing-units`                    | `GET/POST /api/v1/sicim/managing-units` (registro local **provisório**, RN19 — ver `NOTA-TECNICA.md` item 2) | GET: todas SICIM_*; POST/desativar: ADMIN |
+| —                                             | `PATCH /api/v1/sicim/managing-units/{id}/deactivate`         | ADMIN                           |
 | `POST /properties`                            | `POST /api/v1/sicim/properties`                              | ADMIN, REGISTRAR               |
 | `GET /properties`                             | `GET /api/v1/sicim/properties`                               | todas SICIM_*                  |
 | `GET /properties/custom-categories`           | `GET /api/v1/sicim/properties/custom-categories`             | todas SICIM_*                  |

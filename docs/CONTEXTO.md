@@ -70,11 +70,19 @@ Repositórios de origem: `MikaelDiogo/SICIM_BackEnd` (NestJS) e `MikaelDiogo/SIC
 | Dado | Dono | Como o SICIM referencia |
 | ---- | ---- | ----------------------- |
 | Usuário / perfil | Keycloak + identity | claim `sub` do JWT (`created_by`, `approved_by`) |
-| Órgão gestor (secretaria) | organization | `managing_unit_id` (UUID) |
+| Órgão gestor (secretaria) | organization (alvo) | `managing_unit_id` (UUID) — ver exceção provisória abaixo |
 | Bairro | geography | `neighborhood_id` (UUID, opcional na v1) |
 
 Regra: o SICIM guarda apenas o **UUID**; nunca copia o nome da secretaria como fonte da verdade e
 nunca faz JOIN com outro schema.
+
+**Exceção provisória — órgão gestor**: como a API de organization ainda não existe no Dev Host,
+o SICIM mantém um registro local (`sicim.managing_units`, `GET/POST /api/v1/sicim/managing-units`)
+que serve só para o time conseguir testar o fluxo completo (cadastro → aprovação exigindo
+`managingUnitId` válido). É uma exceção documentada à regra 1.6 de `REGRAS.md`, não uma mudança de
+dono do dado: quando a organization expuser a API real, o SICIM troca de adapter
+(`PlatformManagingUnitDirectoryAdapter`) e o registro local deixa de ser consultado — ver
+`NOTA-TECNICA.md` item 2.
 
 ## 6. Atores e perfis
 

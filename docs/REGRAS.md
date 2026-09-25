@@ -16,6 +16,14 @@
 4. **[BLOQUEANTE]** DDL **somente via Flyway** em `src/main/resources/db/module-migration/`. Nunca alterar migration já publicada: criar uma nova (`V<AAAAMMDD>__descricao.sql`).
 5. **[BLOQUEANTE]** Toda tabela de negócio tem as colunas de auditoria: `id`, `created_at`, `updated_at`, `created_by`, `updated_by`, `org_id`, `source`, `sensitivity`, `lifecycle_status`, `version`.
 6. **[BLOQUEANTE]** Sem `JOIN` cross-schema. Dados de outro domínio (órgão, bairro, usuário) são referenciados **só por UUID**.
+   - **Exceção documentada — órgão gestor**: enquanto a API de organization da plataforma não
+     existe no Dev Host, o SICIM mantém um registro local provisório (`sicim.managing_units`,
+     `ManagingUnitController`) que serve de fonte da verdade só para viabilizar o RN17. A porta
+     `ManagingUnitDirectory` já está pronta para ser trocada pela consulta real à organization
+     assim que a API existir (`PlatformManagingUnitDirectoryAdapter`, selecionado automaticamente
+     quando `sicim.integration.organization.base-url` for configurada — ver
+     `ManagingUnitDirectoryConfig` e `NOTA-TECNICA.md` item 2). Nenhuma outra tabela do módulo tem
+     essa exceção.
 7. **[BLOQUEANTE]** Sem `DELETE` físico. Exclusão = `lifecycle_status` (`INACTIVE`/`DELETED`).
 8. **[BLOQUEANTE]** Sem autenticação própria: nada de `POST /login`, bcrypt, tabela de senha ou cookie de sessão. Identidade vem do JWT do Keycloak.
 9. **[BLOQUEANTE]** Toda rota com `@PreAuthorize` usando as roles `SICIM_*` e documentada no OpenAPI (`@Tag("sicim")` + `@Operation`).
@@ -88,24 +96,26 @@ grep -rn "sicim.infrastructure" src/main/java/br/gov/crateus/bcm/sicim/api      
 
 | # | Regra | Onde | Erro |
 | - | ----- | ---- | ---- |
-| RN01 | Matrícula no formato `MAT-YYYY-NNNNN`, normalizada em maiúsculas | `RegistrationNumber` | 400 |
-| RN02 | Matrícula única | `RegisterPropertyUseCase` + `UNIQUE` no banco | 409 |
-| RN03 | CEP `NNNNN-NNN` ou `NNNNNNNN` | `Address` | 400 |
-| RN04 | Coordenada dentro do bounding box de Crateús (lat −5,65 a −4,70; lng −41,20 a −40,10) | `Geolocation` | 400 |
-| RN05 | Área total e construída positivas; construída ≤ total | `PropertyRules.validateAreas` + `CHECK` | 400 |
-| RN06 | Posse diferente de `OWNED` exige contrato; contrato exige início e nº de processo; fim ≥ início | `PropertyRules`, `PossessionContract` | 400 |
-| RN07 | Ano de aquisição entre 1800 e o ano corrente | `PropertyRules.validateAcquisitionYear` | 400 |
-| RN08 | Valor original positivo; valores monetários nunca negativos | `Property`, `MonetaryValue` | 400 |
+| RN01 | Matrícula (opcional — ver RN20), quando informada, no formato `MAT-YYYY-NNNNN`, normalizada em maiúsculas | `RegistrationNumber` | 400 |
+| RN02 | Matrícula única entre as informadas (várias sem matrícula podem coexistir) | `RegisterPropertyUseCase`/`UpdatePropertyUseCase` + `UNIQUE` no banco | 409 |
+| RN03 | CEP `NNNNN-NNN` ou `NNNNNNNN` (sempre obrigatório — ver RN20) | `Address` | 400 |
+| RN04 | Coordenada dentro do bounding box de Crateús (lat −5,65 a −4,70; lng −41,20 a −40,10; sempre obrigatória — ver RN20) | `Geolocation` | 400 |
+| RN05 | Área total e construída (opcionais — ver RN20); quando ambas informadas: positivas e construída ≤ total | `PropertyRules.validateAreas` | 400 |
+| RN06 | Posse diferente de `OWNED`, quando informada, exige contrato; contrato exige início e nº de processo; fim ≥ início | `PropertyRules`, `PossessionContract` | 400 |
+| RN07 | Ano de aquisição (opcional — ver RN20), quando informado, entre 1800 e o ano corrente | `PropertyRules.validateAcquisitionYear` | 400 |
+| RN08 | Valor original (opcional — ver RN20), quando informado, positivo; valores monetários nunca negativos | `Property`, `MonetaryValue` | 400 |
 | RN09 | Nome de categoria personalizada só quando categoria = `OTHER` | `PropertyRules.normalizeCustomCategory` | — (descartado) |
 | RN10 | Cadastro nasce `PENDING_APPROVAL` com depreciação zero | `Property.register` | — |
 | RN11 | Imóvel `INACTIVE` não pode ser aprovado nem editado | `PropertyRules.ensureCanApprove/ensureCanChange` | 409 |
 | RN12 | Desativação é lógica (`INACTIVE` + `lifecycle_status INACTIVE`) | `Property.deactivate` | — |
 | RN13 | Depreciação linear por categoria, limitada ao valor original | `DepreciationCalculator` | — |
-| RN14 | Matrícula e status não são editáveis via PATCH | `PropertyChanges` (não possui os campos) | — |
+| RN14 | Matrícula é editável via PATCH (decisão de negócio — ver RN20); status não é editável | `PropertyChanges` | — |
 | RN15 | Toda escrita gera entrada de histórico (antes/depois) e evento de outbox na mesma transação | `PropertyChangeRecorder` | — |
 | RN16 | Edição concorrente do mesmo imóvel | `version` + `JpaPropertyRepositoryAdapter` | 409 |
 | RN17 | Órgão gestor (`managingUnitId`) deve existir na plataforma (organization) | `PropertyReferenceValidator` | 400 |
 | RN18 | Bairro (`neighborhoodId`), quando informado, deve existir na plataforma (geography) | `PropertyReferenceValidator` | 400 |
+| RN19 | Sigla de órgão gestor única entre os ativos (registro local provisório) | `ManagingUnit` + `UNIQUE INDEX ... WHERE lifecycle_status = 'ACTIVE'` | 409 |
+| RN20 | Só `notarialDescription`, `address.zipCode`, `latitude`/`longitude` e `managingUnitId` são obrigatórios no cadastro (decisão de negócio, 2026-09-25) — os demais campos podem ficar em branco e ser completados depois, inclusive após a aprovação; não há trava de completude para aprovar | `RegisterPropertyRequest`, `Property.register` | — |
 
 ## 6. Regras de segurança e autorização
 
@@ -116,6 +126,8 @@ grep -rn "sicim.infrastructure" src/main/java/br/gov/crateus/bcm/sicim/api      
 | Aprovar / desativar | ✅ | ✅ | ❌ | ❌ |
 | Recalcular depreciação | ✅ | ❌ | ❌ | ❌ |
 | Histórico / auditoria | ✅ | ❌ | ❌ | ❌ |
+| Órgão gestor: listar / detalhar | ✅ | ✅ | ✅ | ✅ |
+| Órgão gestor: cadastrar / desativar | ✅ | ❌ | ❌ | ❌ |
 
 - Expressões centralizadas em `SicimRoles` — não escrever strings de role soltas nos controllers.
 - Autorização **sempre no backend**; o front apenas esconde botões.

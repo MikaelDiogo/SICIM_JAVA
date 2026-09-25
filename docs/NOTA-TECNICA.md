@@ -41,10 +41,15 @@ Nenhuma claim customizada exigida na v1. Autor das operações = claim `sub`.
    extensão existir no servidor, então é no-op seguro no Dev Host atual (`postgres:16-alpine`,
    sem PostGIS) e ativa sozinha quando o BDM (ou um Dev Host trocado para `postgis/postgis`)
    tiver a extensão — nenhuma ação adicional de código.
-2. **Validação do órgão gestor** — a porta `ManagingUnitDirectory` (RN17) e o adapter
-   `ManagingUnitDirectoryAdapter` já existem. Sem `sicim.integration.organization.base-url`
-   configurada (caso do Dev Host hoje, que não expõe essa API), a validação segue permissiva
-   (só formato UUID); falta a Seplati informar a base URL real da API de organization.
+2. **Validação do órgão gestor** — a porta `ManagingUnitDirectory` (RN17) tem duas implementações,
+   escolhidas por `ManagingUnitDirectoryConfig`: `PlatformManagingUnitDirectoryAdapter` quando
+   `sicim.integration.organization.base-url` estiver configurada (consulta a API real da
+   organization), e `LocalManagingUnitDirectoryAdapter` como padrão no Dev Host hoje — valida
+   contra um **registro local provisório** (`sicim.managing_units`,
+   `GET/POST /api/v1/sicim/managing-units`, RN19), exceção documentada à regra 1.6 de
+   `REGRAS.md` (ver `CONTEXTO.md` §5). Falta a Seplati informar a base URL real da API de
+   organization; quando isso acontecer, o registro local deixa de ser consultado sem nenhuma
+   mudança de código.
 3. **Bairro** — `address_neighborhood` (texto) mantido por compatibilidade; `neighborhood_id`
    (UUID de geography) é opcional e agora validado (RN18) pela porta `NeighborhoodDirectory` /
    adapter `NeighborhoodDirectoryAdapter`, com o mesmo fallback permissivo do item 2 enquanto
@@ -65,7 +70,7 @@ Nenhuma claim customizada exigida na v1. Autor das operações = claim `sub`.
 | 2 | Flyway: `\dt sicim.*` mostra `properties` e `property_history`     | ok                  |
 | 3 | `sicim-cadastro` cadastra imóvel OWNED                             | 201 PENDING_APPROVAL |
 | 4 | Mesmo número de matrícula de novo                                  | 409                 |
-| 5 | RENTED sem contrato / área construída > total / fora de Crateús / órgão gestor ou bairro inexistente (com integração configurada) | 400 |
+| 5 | RENTED sem contrato / área construída > total / fora de Crateús / órgão gestor inexistente (registro local ou plataforma) / bairro inexistente (com integração configurada) | 400 |
 | 6 | `sicim-consulta` tenta cadastrar                                   | 403                 |
 | 7 | `sicim-aprovador` aprova                                           | 200 APPROVED        |
 | 8 | `sicim-aprovador` desativa; depois tenta aprovar                   | 200 / 409           |
