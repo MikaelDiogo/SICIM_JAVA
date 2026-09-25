@@ -20,7 +20,7 @@ public record PropertyState(
 		String customCategoryName,
 		PossessionType possessionType,
 		PossessionContract possessionContract,
-		int acquisitionYear,
+		Integer acquisitionYear,
 		MonetaryValue originalValue,
 		MonetaryValue accumulatedDepreciation,
 		String publicPurpose,

@@ -41,6 +41,7 @@ public final class PropertyCommandMapper {
 
 	public static PropertyChanges toChanges(UpdatePropertyCommand c) {
 		return new PropertyChanges(
+				RegistrationNumber.of(c.registrationNumber()),
 				c.notaryOffice(),
 				c.notarialDescription(),
 				toAddress(c.address()),

@@ -15,24 +15,28 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+// Só notarialDescription, address (CEP), latitude/longitude e managingUnitId são obrigatórios
+// no cadastro (ver REGRAS.md) — o resto pode ser completado depois via PATCH, inclusive após
+// a aprovação. "Obrigatório" aqui não significa "sempre exigido no negócio": só valida formato
+// quando o campo é de fato informado.
 public record RegisterPropertyRequest(
-		@Schema(example = "MAT-2024-00001") @NotBlank String registrationNumber,
-		@NotBlank @Size(max = 255) String notaryOffice,
+		@Schema(example = "MAT-2024-00001") String registrationNumber,
+		@Size(max = 255) String notaryOffice,
 		@NotBlank String notarialDescription,
 		@NotNull @Valid AddressRequest address,
-		@NotNull @Positive BigDecimal totalArea,
-		@NotNull @Positive BigDecimal builtArea,
+		@Positive BigDecimal totalArea,
+		@Positive BigDecimal builtArea,
 		@NotNull @DecimalMin("-5.65") @DecimalMax("-4.70") BigDecimal latitude,
 		@NotNull @DecimalMin("-41.20") @DecimalMax("-40.10") BigDecimal longitude,
 		@Schema(description = "UUID do órgão gestor na plataforma (organization)") @NotNull UUID managingUnitId,
 		@Size(max = 100) String budgetUnit,
-		@NotNull UsageCategory usageCategory,
+		UsageCategory usageCategory,
 		@Size(max = 100) String customCategoryName,
-		@NotNull PossessionType possessionType,
+		PossessionType possessionType,
 		@Schema(description = "Obrigatório quando possessionType != OWNED") @Valid PossessionContractRequest possessionContract,
-		@NotNull @Min(1800) Integer acquisitionYear,
-		@NotNull @Positive BigDecimal originalValue,
-		@NotBlank String publicPurpose
+		@Min(1800) Integer acquisitionYear,
+		@Positive BigDecimal originalValue,
+		String publicPurpose
 ) {
 
 	public RegisterPropertyCommand toCommand() {

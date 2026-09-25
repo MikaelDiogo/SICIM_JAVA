@@ -11,8 +11,13 @@ public final class PropertyRules {
 	private PropertyRules() {
 	}
 
+	// Total/construída, posse, ano e valor original são opcionais (ver REGRAS.md) — só validam
+	// quando informados. Objeto incompleto não é erro; regra de formato/consistência, sim.
 	public static void validateAreas(BigDecimal totalArea, BigDecimal builtArea) {
-		if (totalArea == null || totalArea.signum() <= 0 || builtArea == null || builtArea.signum() <= 0) {
+		if (totalArea == null || builtArea == null) {
+			return;
+		}
+		if (totalArea.signum() <= 0 || builtArea.signum() <= 0) {
 			throw SicimDomainException.validation("Total area and built area must be positive.");
 		}
 		if (builtArea.compareTo(totalArea) > 0) {
@@ -23,7 +28,7 @@ public final class PropertyRules {
 
 	public static void validatePossession(PossessionType type, PossessionContract contract) {
 		if (type == null) {
-			throw SicimDomainException.validation("Possession type is required.");
+			return;
 		}
 		if (type.requiresContract() && contract == null) {
 			throw SicimDomainException.validation(
@@ -31,10 +36,22 @@ public final class PropertyRules {
 		}
 	}
 
-	public static void validateAcquisitionYear(int year, int currentYear) {
+	public static void validateAcquisitionYear(Integer year, int currentYear) {
+		if (year == null) {
+			return;
+		}
 		if (year < MIN_ACQUISITION_YEAR || year > currentYear) {
 			throw SicimDomainException.validation(
 					"Acquisition year must be between " + MIN_ACQUISITION_YEAR + " and " + currentYear + ".");
+		}
+	}
+
+	public static void validateOriginalValue(MonetaryValue originalValue) {
+		if (originalValue == null) {
+			return;
+		}
+		if (originalValue.amount().signum() <= 0) {
+			throw SicimDomainException.validation("originalValue must be positive.");
 		}
 	}
 

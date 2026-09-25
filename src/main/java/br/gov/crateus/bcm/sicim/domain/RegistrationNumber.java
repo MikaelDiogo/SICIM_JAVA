@@ -15,7 +15,11 @@ public record RegistrationNumber(String value) {
 		}
 	}
 
+	/** {@code null}/branco = matrícula ainda não definida (campo opcional — ver REGRAS.md). */
 	public static RegistrationNumber of(String raw) {
-		return new RegistrationNumber(raw == null ? null : raw.trim().toUpperCase());
+		if (raw == null || raw.isBlank()) {
+			return null;
+		}
+		return new RegistrationNumber(raw.trim().toUpperCase());
 	}
 }

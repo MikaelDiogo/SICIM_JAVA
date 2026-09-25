@@ -24,7 +24,7 @@ class PropertyTest {
 	}
 
 	static PropertyChanges changes(PossessionType type, PossessionContract contract, BigDecimal builtArea) {
-		return new PropertyChanges(null, null, null, null, builtArea, null, null, null, null, null, null, type,
+		return new PropertyChanges(null, null, null, null, null, builtArea, null, null, null, null, null, null, type,
 				contract, null, null, null);
 	}
 

@@ -59,12 +59,15 @@ public record PropertyResult(
 		PropertyState s = property.state();
 		var a = s.address();
 		return new PropertyResult(
-				s.id(), s.registrationNumber().value(), s.notaryOffice(), s.notarialDescription(),
+				s.id(), s.registrationNumber() == null ? null : s.registrationNumber().value(), s.notaryOffice(),
+				s.notarialDescription(),
 				new Address(a.street(), a.number(), a.neighborhood(), a.neighborhoodId(), a.zipCode(), a.reference()),
 				s.totalArea(), s.builtArea(), s.geolocation().latitude(), s.geolocation().longitude(),
 				s.managingUnitId(), s.budgetUnit(), s.usageCategory(), s.customCategoryName(), s.possessionType(),
-				Contract.from(s.possessionContract()), s.acquisitionYear(), s.originalValue().amount(),
-				s.accumulatedDepreciation().amount(), property.netBookValue().amount(), s.publicPurpose(),
+				Contract.from(s.possessionContract()), s.acquisitionYear(),
+				s.originalValue() == null ? null : s.originalValue().amount(),
+				s.accumulatedDepreciation().amount(),
+				property.netBookValue() == null ? null : property.netBookValue().amount(), s.publicPurpose(),
 				s.status(), s.audit().createdBy(), s.approvedBy(), s.approvedAt(),
 				s.audit().lifecycleStatus().name(), s.audit().version(), s.audit().createdAt(),
 				s.audit().updatedAt());

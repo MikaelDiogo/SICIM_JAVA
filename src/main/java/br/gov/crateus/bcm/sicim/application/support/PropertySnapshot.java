@@ -16,7 +16,7 @@ public final class PropertySnapshot {
 		PropertyState s = property.state();
 		Map<String, Object> m = new LinkedHashMap<>();
 		m.put("id", text(s.id()));
-		m.put("registrationNumber", s.registrationNumber().value());
+		m.put("registrationNumber", s.registrationNumber() == null ? null : s.registrationNumber().value());
 		m.put("notaryOffice", s.notaryOffice());
 		m.put("notarialDescription", s.notarialDescription());
 		m.put("address", address(s));
@@ -31,7 +31,7 @@ public final class PropertySnapshot {
 		m.put("possessionType", text(s.possessionType()));
 		m.put("possessionContract", contract(s.possessionContract()));
 		m.put("acquisitionYear", s.acquisitionYear());
-		m.put("originalValue", text(s.originalValue().amount()));
+		m.put("originalValue", text(s.originalValue() == null ? null : s.originalValue().amount()));
 		m.put("accumulatedDepreciation", text(s.accumulatedDepreciation().amount()));
 		m.put("publicPurpose", s.publicPurpose());
 		m.put("status", text(s.status()));

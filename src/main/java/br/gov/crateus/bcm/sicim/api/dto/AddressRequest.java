@@ -8,9 +8,9 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record AddressRequest(
-		@NotBlank @Size(max = 255) String street,
-		@NotBlank @Size(max = 20) String number,
-		@NotBlank @Size(max = 100) String neighborhood,
+		@Size(max = 255) String street,
+		@Size(max = 20) String number,
+		@Size(max = 100) String neighborhood,
 		@Schema(description = "UUID do bairro na plataforma (geography). Opcional até a integração.")
 		UUID neighborhoodId,
 		@NotBlank @Pattern(regexp = "^\\d{5}-?\\d{3}$", message = "must match NNNNN-NNN") String zipCode,

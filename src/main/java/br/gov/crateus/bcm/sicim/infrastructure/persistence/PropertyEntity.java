@@ -16,22 +16,23 @@ import java.util.UUID;
 @Table(name = "properties", schema = "sicim")
 public class PropertyEntity extends SicimAuditableEntity {
 
-	@Column(name = "registration_number", length = 20, nullable = false, unique = true, updatable = false)
+	// Opcional (ver REGRAS.md) — editável via PATCH, por isso sem updatable = false.
+	@Column(name = "registration_number", length = 20, unique = true)
 	private String registrationNumber;
 
-	@Column(name = "notary_office", nullable = false)
+	@Column(name = "notary_office")
 	private String notaryOffice;
 
 	@Column(name = "notarial_description", nullable = false, columnDefinition = "text")
 	private String notarialDescription;
 
-	@Column(name = "address_street", nullable = false)
+	@Column(name = "address_street")
 	private String addressStreet;
 
-	@Column(name = "address_number", length = 20, nullable = false)
+	@Column(name = "address_number", length = 20)
 	private String addressNumber;
 
-	@Column(name = "address_neighborhood", length = 100, nullable = false)
+	@Column(name = "address_neighborhood", length = 100)
 	private String addressNeighborhood;
 
 	@Column(name = "neighborhood_id")
@@ -43,10 +44,10 @@ public class PropertyEntity extends SicimAuditableEntity {
 	@Column(name = "address_reference")
 	private String addressReference;
 
-	@Column(name = "total_area", precision = 12, scale = 2, nullable = false)
+	@Column(name = "total_area", precision = 12, scale = 2)
 	private BigDecimal totalArea;
 
-	@Column(name = "built_area", precision = 12, scale = 2, nullable = false)
+	@Column(name = "built_area", precision = 12, scale = 2)
 	private BigDecimal builtArea;
 
 	@Column(name = "latitude", precision = 9, scale = 6, nullable = false)
@@ -62,14 +63,14 @@ public class PropertyEntity extends SicimAuditableEntity {
 	private String budgetUnit;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "usage_category", length = 32, nullable = false)
+	@Column(name = "usage_category", length = 32)
 	private UsageCategory usageCategory;
 
 	@Column(name = "custom_category_name", length = 100)
 	private String customCategoryName;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "possession_type", length = 32, nullable = false)
+	@Column(name = "possession_type", length = 32)
 	private PossessionType possessionType;
 
 	@Column(name = "contract_start_date")
@@ -93,16 +94,16 @@ public class PropertyEntity extends SicimAuditableEntity {
 	@Column(name = "contract_administrative_process_number", length = 100)
 	private String contractAdministrativeProcessNumber;
 
-	@Column(name = "acquisition_year", nullable = false)
+	@Column(name = "acquisition_year")
 	private Integer acquisitionYear;
 
-	@Column(name = "original_value", precision = 14, scale = 2, nullable = false)
+	@Column(name = "original_value", precision = 14, scale = 2)
 	private BigDecimal originalValue;
 
 	@Column(name = "accumulated_depreciation", precision = 14, scale = 2, nullable = false)
 	private BigDecimal accumulatedDepreciation = BigDecimal.ZERO;
 
-	@Column(name = "public_purpose", nullable = false, columnDefinition = "text")
+	@Column(name = "public_purpose", columnDefinition = "text")
 	private String publicPurpose;
 
 	@Enumerated(EnumType.STRING)

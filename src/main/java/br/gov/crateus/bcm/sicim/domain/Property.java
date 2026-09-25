@@ -20,10 +20,12 @@ public final class Property {
 	/** Cadastro: gera id, status PENDING_APPROVAL e depreciação zero. */
 	public static Property register(NewProperty data, int currentYear) {
 		Objects.requireNonNull(data, "data");
+		// Só descrição, endereço (CEP), localização e órgão gestor são obrigatórios no cadastro
+		// (ver REGRAS.md) — o resto pode ser completado depois, inclusive após a aprovação.
 		PropertyState state = new PropertyState(
 				UUID.randomUUID(),
-				require(data.registrationNumber(), "registrationNumber"),
-				Text.required(data.notaryOffice(), "notaryOffice"),
+				data.registrationNumber(),
+				Text.optional(data.notaryOffice()),
 				Text.required(data.notarialDescription(), "notarialDescription"),
 				require(data.address(), "address"),
 				data.totalArea(),
@@ -31,14 +33,14 @@ public final class Property {
 				require(data.geolocation(), "geolocation"),
 				require(data.managingUnitId(), "managingUnitId"),
 				Text.optional(data.budgetUnit()),
-				require(data.usageCategory(), "usageCategory"),
+				data.usageCategory(),
 				PropertyRules.normalizeCustomCategory(data.usageCategory(), data.customCategoryName()),
 				data.possessionType(),
 				effectiveContract(data.possessionType(), data.possessionContract()),
-				require(data.acquisitionYear(), "acquisitionYear"),
-				require(data.originalValue(), "originalValue"),
+				data.acquisitionYear(),
+				data.originalValue(),
 				MonetaryValue.ZERO,
-				Text.required(data.publicPurpose(), "publicPurpose"),
+				Text.optional(data.publicPurpose()),
 				PropertyStatus.PENDING_APPROVAL,
 				null,
 				null,
@@ -68,8 +70,8 @@ public final class Property {
 
 		PropertyState next = new PropertyState(
 				s.id(),
-				s.registrationNumber(),
-				c.notaryOffice() == null ? s.notaryOffice() : Text.required(c.notaryOffice(), "notaryOffice"),
+				orElse(c.registrationNumber(), s.registrationNumber()),
+				c.notaryOffice() == null ? s.notaryOffice() : Text.optional(c.notaryOffice()),
 				c.notarialDescription() == null ? s.notarialDescription()
 						: Text.required(c.notarialDescription(), "notarialDescription"),
 				orElse(c.address(), s.address()),
@@ -85,7 +87,7 @@ public final class Property {
 				orElse(c.acquisitionYear(), s.acquisitionYear()),
 				orElse(c.originalValue(), s.originalValue()),
 				s.accumulatedDepreciation(),
-				c.publicPurpose() == null ? s.publicPurpose() : Text.required(c.publicPurpose(), "publicPurpose"),
+				c.publicPurpose() == null ? s.publicPurpose() : Text.optional(c.publicPurpose()),
 				s.status(),
 				s.approvedBy(),
 				s.approvedAt(),
@@ -107,13 +109,18 @@ public final class Property {
 	}
 
 	public void recalculateDepreciation(int currentYear) {
+		if (state.originalValue() == null || state.usageCategory() == null || state.acquisitionYear() == null) {
+			throw SicimDomainException.validation("Cannot recalculate depreciation: acquisitionYear, originalValue "
+					+ "and usageCategory must be filled in first.");
+		}
 		MonetaryValue depreciation = DepreciationCalculator.calculate(
 				state.originalValue(), state.usageCategory(), state.acquisitionYear(), currentYear);
 		state = copy(state.status(), state.approvedBy(), state.approvedAt(), depreciation, state.audit());
 	}
 
+	/** {@code null} enquanto originalValue não é preenchido (campo opcional — ver REGRAS.md). */
 	public MonetaryValue netBookValue() {
-		return state.originalValue().subtract(state.accumulatedDepreciation());
+		return state.originalValue() == null ? null : state.originalValue().subtract(state.accumulatedDepreciation());
 	}
 
 	public boolean isDeleted() {
@@ -134,9 +141,7 @@ public final class Property {
 		PropertyRules.validateAreas(s.totalArea(), s.builtArea());
 		PropertyRules.validatePossession(s.possessionType(), requestedContract);
 		PropertyRules.validateAcquisitionYear(s.acquisitionYear(), currentYear);
-		if (s.originalValue().amount().signum() <= 0) {
-			throw SicimDomainException.validation("originalValue must be positive.");
-		}
+		PropertyRules.validateOriginalValue(s.originalValue());
 	}
 
 	private static PossessionContract effectiveContract(PossessionType type, PossessionContract contract) {

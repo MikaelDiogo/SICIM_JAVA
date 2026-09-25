@@ -12,6 +12,8 @@ import br.gov.crateus.bcm.sicim.application.support.PropertyReferenceValidator;
 import br.gov.crateus.bcm.sicim.application.support.PropertySnapshot;
 import br.gov.crateus.bcm.sicim.domain.Property;
 import br.gov.crateus.bcm.sicim.domain.PropertyHistoryAction;
+import br.gov.crateus.bcm.sicim.domain.RegistrationNumber;
+import br.gov.crateus.bcm.sicim.domain.exception.SicimDomainException;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,12 @@ public class UpdatePropertyUseCase {
 		references.validateManagingUnit(command.managingUnitId());
 		if (command.address() != null) {
 			references.validateNeighborhood(command.address().neighborhoodId());
+		}
+		RegistrationNumber requested = RegistrationNumber.of(command.registrationNumber());
+		if (requested != null && !requested.equals(property.state().registrationNumber())
+				&& properties.existsByRegistrationNumber(requested.value())) {
+			throw SicimDomainException.conflict(
+					"A property with registration number \"" + requested.value() + "\" already exists.");
 		}
 		property.update(PropertyCommandMapper.toChanges(command), time.currentYear());
 		Property saved = properties.save(property);

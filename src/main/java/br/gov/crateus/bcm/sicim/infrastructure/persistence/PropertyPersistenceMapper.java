@@ -23,7 +23,7 @@ final class PropertyPersistenceMapper {
 				e.getContractAdministrativeProcessNumber());
 		return Property.reconstitute(new PropertyState(
 				e.getId(),
-				new RegistrationNumber(e.getRegistrationNumber()),
+				e.getRegistrationNumber() == null ? null : new RegistrationNumber(e.getRegistrationNumber()),
 				e.getNotaryOffice(),
 				e.getNotarialDescription(),
 				new Address(e.getAddressStreet(), e.getAddressNumber(), e.getAddressNeighborhood(),
@@ -38,7 +38,7 @@ final class PropertyPersistenceMapper {
 				e.getPossessionType(),
 				contract,
 				e.getAcquisitionYear(),
-				MonetaryValue.of(e.getOriginalValue()),
+				e.getOriginalValue() == null ? null : MonetaryValue.of(e.getOriginalValue()),
 				MonetaryValue.of(e.getAccumulatedDepreciation()),
 				e.getPublicPurpose(),
 				e.getStatus(),
@@ -50,7 +50,7 @@ final class PropertyPersistenceMapper {
 
 	static void copyToEntity(Property property, PropertyEntity e) {
 		PropertyState s = property.state();
-		e.setRegistrationNumber(s.registrationNumber().value());
+		e.setRegistrationNumber(s.registrationNumber() == null ? null : s.registrationNumber().value());
 		e.setNotaryOffice(s.notaryOffice());
 		e.setNotarialDescription(s.notarialDescription());
 		e.setAddressStreet(s.address().street());
@@ -70,7 +70,7 @@ final class PropertyPersistenceMapper {
 		e.setPossessionType(s.possessionType());
 		copyContract(s.possessionContract(), e);
 		e.setAcquisitionYear(s.acquisitionYear());
-		e.setOriginalValue(s.originalValue().amount());
+		e.setOriginalValue(s.originalValue() == null ? null : s.originalValue().amount());
 		e.setAccumulatedDepreciation(s.accumulatedDepreciation().amount());
 		e.setPublicPurpose(s.publicPurpose());
 		e.setStatus(s.status());

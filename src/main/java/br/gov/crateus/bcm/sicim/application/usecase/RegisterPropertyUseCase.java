@@ -36,10 +36,12 @@ public class RegisterPropertyUseCase {
 		NewProperty data = PropertyCommandMapper.toNewProperty(command);
 		references.validateManagingUnit(data.managingUnitId());
 		references.validateNeighborhood(data.address().neighborhoodId());
-		String registration = data.registrationNumber().value();
-		if (properties.existsByRegistrationNumber(registration)) {
-			throw SicimDomainException.conflict(
-					"A property with registration number \"" + registration + "\" already exists.");
+		if (data.registrationNumber() != null) {
+			String registration = data.registrationNumber().value();
+			if (properties.existsByRegistrationNumber(registration)) {
+				throw SicimDomainException.conflict(
+						"A property with registration number \"" + registration + "\" already exists.");
+			}
 		}
 		Property saved = properties.save(Property.register(data, time.currentYear()));
 		recorder.record(saved, PropertyHistoryAction.CREATE, null, PropertyEvent.PROPERTY_REGISTERED);

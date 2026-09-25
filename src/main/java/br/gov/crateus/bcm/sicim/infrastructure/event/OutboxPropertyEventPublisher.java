@@ -28,7 +28,7 @@ class OutboxPropertyEventPublisher implements PropertyEventPublisher {
 		PropertyState s = property.state();
 		Map<String, Object> payload = new LinkedHashMap<>();
 		payload.put("propertyId", s.id().toString());
-		payload.put("registrationNumber", s.registrationNumber().value());
+		payload.put("registrationNumber", s.registrationNumber() == null ? null : s.registrationNumber().value());
 		payload.put("managingUnitId", s.managingUnitId().toString());
 		payload.put("status", s.status().name());
 		outbox.record(AGGREGATE_TYPE, s.id().toString(), event.eventType(), payload);

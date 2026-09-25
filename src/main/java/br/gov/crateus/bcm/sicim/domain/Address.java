@@ -14,9 +14,10 @@ public record Address(String street, String number, String neighborhood, UUID ne
 	private static final Pattern ZIP_CODE = Pattern.compile("^\\d{5}-?\\d{3}$");
 
 	public Address {
-		street = Text.required(street, "address.street");
-		number = Text.required(number, "address.number");
-		neighborhood = Text.required(neighborhood, "address.neighborhood");
+		// Só o CEP é obrigatório (ver REGRAS.md) — rua/número/bairro podem ser completados depois.
+		street = Text.optional(street);
+		number = Text.optional(number);
+		neighborhood = Text.optional(neighborhood);
 		zipCode = zipCode == null ? null : zipCode.trim();
 		reference = Text.optional(reference);
 		if (zipCode == null || !ZIP_CODE.matcher(zipCode).matches()) {

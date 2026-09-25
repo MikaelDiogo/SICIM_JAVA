@@ -5,8 +5,9 @@ import br.gov.crateus.bcm.sicim.domain.UsageCategory;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/** Atualização parcial: campo {@code null} = não alterar. Matrícula e status não são editáveis. */
+/** Atualização parcial: campo {@code null} = não alterar. Status não é editável (RN12/RN11). */
 public record UpdatePropertyCommand(
+		String registrationNumber,
 		String notaryOffice,
 		String notarialDescription,
 		AddressInput address,

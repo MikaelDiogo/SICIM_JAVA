@@ -91,12 +91,12 @@ class PropertyUseCasesTest {
 
 	private static UpdatePropertyCommand purpose(String publicPurpose) {
 		return new UpdatePropertyCommand(null, null, null, null, null, null, null, null, null, null, null, null,
-				null, null, null, publicPurpose);
+				null, null, null, null, publicPurpose);
 	}
 
 	private static UpdatePropertyCommand managingUnit(UUID managingUnitId) {
-		return new UpdatePropertyCommand(null, null, null, null, null, null, null, managingUnitId, null, null, null,
-				null, null, null, null, null);
+		return new UpdatePropertyCommand(null, null, null, null, null, null, null, null, managingUnitId, null, null,
+				null, null, null, null, null, null);
 	}
 
 	@Test

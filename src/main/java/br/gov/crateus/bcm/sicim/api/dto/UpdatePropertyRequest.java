@@ -12,8 +12,9 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/** PATCH parcial — campos ausentes não são alterados. */
+/** PATCH parcial — campos ausentes não são alterados. Matrícula pode ser definida/alterada aqui. */
 public record UpdatePropertyRequest(
+		@Size(min = 1) String registrationNumber,
 		@Size(min = 1, max = 255) String notaryOffice,
 		@Size(min = 1) String notarialDescription,
 		@Valid AddressRequest address,
@@ -33,7 +34,7 @@ public record UpdatePropertyRequest(
 ) {
 
 	public UpdatePropertyCommand toCommand() {
-		return new UpdatePropertyCommand(notaryOffice, notarialDescription,
+		return new UpdatePropertyCommand(registrationNumber, notaryOffice, notarialDescription,
 				address == null ? null : address.toInput(), totalArea, builtArea, latitude, longitude,
 				managingUnitId, budgetUnit, usageCategory, customCategoryName, possessionType,
 				possessionContract == null ? null : possessionContract.toInput(), acquisitionYear, originalValue,
